@@ -56,7 +56,7 @@ while True:
 	#print('ADC Voltage: ' + str(chan0.voltage) + 'V')
 	
 	# check if the escape button is pressed
-	if GPIO.input(12) == GPIO.HIGH
+	if GPIO.input(12) == GPIO.HIGH:
 		print("\n\n\tDrumTime is now exiting")
 		break
 
