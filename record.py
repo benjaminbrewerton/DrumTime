@@ -3,7 +3,7 @@
 import sys
 import wave
 
-target_file = sys.args[0] # The target file for reading text
+target_file = sys.argv[0] # The target file for reading text
 buffer_size = 1024 # Size of a page to write from
 channels = 1 # Monosound
 rate = 7500 # Samples per second
