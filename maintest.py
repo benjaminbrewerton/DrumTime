@@ -34,6 +34,9 @@ interval = 1/sample_rate # Interval between loop iterations
 # Threshold of stroke to background noise
 threshold = 0.2
 
+# Array for holding samples
+samples = []
+
 while True:
 	# Check to illuimate the LED if the threshold is crossed
 	if chan0.voltage * (1-threshold) > chan0.voltage:
@@ -41,24 +44,29 @@ while True:
 		time.sleep(0.1)
 		GPIO.output(19,GPIO.LOW)
 
-	# Check if loop count exceeds 1000000
-	if loop_count > 1000000:
-		loop_count = 1
-		avg_count = 0
+	# # Check if loop count exceeds 1000000
+	# if loop_count > 1000000:
+	# 	loop_count = 1
+	# 	avg_count = 0
 
-	# Calculate the moving average
-	avg_count += chan0.voltage	
-	moving_avg = avg_count / loop_count
-	loop_count += 1
+	# # Calculate the moving average
+	# avg_count += chan0.voltage	
+	# moving_avg = avg_count / loop_count
+	# loop_count += 1
 
-	#print(moving_avg)
-	#print('ADC Value: ' + str(chan0.value))
-	#print('ADC Voltage: ' + str(chan0.voltage) + 'V')
+	# Append the 16 bit voltage value
+	samples.append(chan0.value)
 	
 	# check if the escape button is pressed
 	if GPIO.input(12) == GPIO.HIGH:
-		print("\n\n\tDrumTime is now exiting")
+		print("\n\nDrumTime is now exiting")
 		break
 
 	# End of Loop
 	time.sleep(interval)
+
+# Write output to file
+f = open("output.txt", "a")
+for sample in samples:
+	f.write(sample)
+f.close()
