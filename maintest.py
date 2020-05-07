@@ -65,8 +65,12 @@ while True:
 	# End of Loop
 	time.sleep(interval)
 
+# check if output exists and delete if it does
+if os.path.exists("output.txt"):
+	os.remove("output.txt")
+
 # Write output to file
 f = open("output.txt", "a")
 for sample in samples:
-	f.write(str(sample))
+	f.write(str(sample) + "\n")
 f.close()
