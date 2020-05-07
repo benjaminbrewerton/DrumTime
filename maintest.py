@@ -10,7 +10,8 @@ import RPi.GPIO as GPIO
 # GPIO info
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
-GPIO.setup(19,GPIO.OUT)
+GPIO.setup(19, GPIO.OUT)
+GPIo.setup(12, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
  
 # create the spi bus
 spi = busio.SPI(clock=board.SCK, MISO=board.MISO, MOSI=board.MOSI)
@@ -54,5 +55,10 @@ while True:
 	#print('ADC Value: ' + str(chan0.value))
 	#print('ADC Voltage: ' + str(chan0.voltage) + 'V')
 	
+	# check if the escape button is pressed
+	if GPIO.input(12) == GPIO.HIGH
+		print("\n\n\tDrumTime is now exiting")
+		break
+
 	# End of Loop
 	time.sleep(interval)
