@@ -35,6 +35,7 @@ threshold = 0.2
 
 
 while True:
+	# Check to illuimate the LED if the threshold is crossed
 	if chan0.voltage * (1-threshold) > chan0.voltage:
 		GPIO.output(19,GPIO.HIGH)
 		time.sleep(0.1)
