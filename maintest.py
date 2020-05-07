@@ -28,7 +28,7 @@ chan0 = AnalogIn(mcp, MCP.P0)
 avg_count = 0 # A count of the total
 moving_avg = 1.65 # half of 3.3V, the centered point
 loop_count = 1 # Count of loop iterations
-sample_rate = 100 # Sampling rate in Hz
+sample_rate = 7500 # Sampling rate in Hz
 interval = 1/sample_rate # Interval between loop iterations
 
 # Threshold of stroke to background noise
