@@ -68,5 +68,5 @@ while True:
 # Write output to file
 f = open("output.txt", "a")
 for sample in samples:
-	f.write(sample)
+	f.write(str(sample))
 f.close()
