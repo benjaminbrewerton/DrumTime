@@ -1,41 +1,38 @@
 # Class for recording audio sampled from the microphone
 
 import sys
-import wave
 from scipy.io.wavfile import write
 import numpy as np
 
 target_file = sys.argv[1] # The target file for reading text
-buffer_size = 1024 # Size of a page to write from
-channels = 1 # Monosound
-rate = 750 # Samples per second
 wave_file_name = "noutput.wav" # Output file name
 
 raw_stream = open(target_file, "r") # open the audio stream from the text file
 
 stream_s = [] # Array for containing the samples
 delta = 0 # Time of recording
-count = 0
+count = 0 # Sample count from recording
 
 for sample in raw_stream:
+	# Check if the line starts with the date flag
 	if sample.startswith("d: "):
+		# Split the contant by space to remove the "d: "
 		count_time = (sample.split(" ")[1]).split(",") # obtain the delta
-		delta = float(count_time[0])
-		count = int(count_time[1])
+		delta = float(count_time[0])  # The recording time
+		count = int(count_time[1])	# The sample count
 	else:
 		stream_int = int(sample) << 6 # Convert to 16 bit from 10 bit
-		#stream_s.append(stream_int.to_bytes(2, "little")) # Append to the stream
-		stream_s.append(stream_int - 2**15)
-		print(stream_int - 2**15)
+		stream_s.append(stream_int - 2**15) # Remove the bias and reduce the waveform around a volume of 0 at adc value 0
 
+# Calculate the actual sampling ratea
+rate = int(count / delta)
+
+# Transform the read samples into a list type of int16
 new_samples = np.array(stream_s, dtype=np.int16)
-write(wave_file_name, int(count / delta), new_samples)
 
-#wf = wave.open(wave_file_name, 'wb')
-#wf.setnchannels(channels)
-#wf.setsampwidth(2)
-#wf.setframerate(rate)
-#wf.writeframes(b''.join(stream_s))
-#wf.close()
+# Write the wave file to the system
+write(wave_file_name, rate, new_samples)
 
-print("count: " + str(count))
+# Output final results
+print("Sample Count: " + str(count))
+print("Recording Time: " + str(delta))

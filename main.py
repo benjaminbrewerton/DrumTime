@@ -1,13 +1,7 @@
 import os
 import time
-import busio
-import digitalio
-import board
-import adafruit_mcp3xxx.mcp3008 as MCP
-from adafruit_mcp3xxx.analog_in import AnalogIn
 import RPi.GPIO as GPIO
 from datetime import datetime
-
 import spidev
 
 # GPIO info
@@ -15,31 +9,22 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 GPIO.setup(19, GPIO.OUT)
 GPIO.setup(12, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
- 
-# create the spi bus
-#spi = busio.SPI(clock=board.SCK, MISO=board.MISO, MOSI=board.MOSI)
- 
-# create the cs (chip select)
-#cs = digitalio.DigitalInOut(board.D22)
- 
-# create the mcp object
-#mcp = MCP.MCP3008(spi, cs)
- 
-# create an analog input channel on pin 0
-#chan0 = AnalogIn(mcp, MCP.P0)
 
 # Open SPI bus
 spi = spidev.SpiDev()
 spi.open(0,0)
 spi.max_speed_hz = 50000
 
+# Function to query the ADC
 def ReadChannel(channel):
-    adc = spi.xfer2([1,(8+channel)<<4,0])
-    data = ((adc[1]&3) << 8) + adc[2]
+	# Transfer 1000 to read channel 0 with the D0-D2 bits
+    adc = spi.xfer2([1, (8+channel) << 4 , 0])
+	# Receive the bits b0-b9 from the adc sample
+    data = ((adc[1] & 3) << 8) + adc[2]
     return data
 
 avg_count = 0 # A count of the total
-moving_avg = 1.65 # half of 3.3V, the centered point
+moving_avg = (2**10) / 2 # half point of a 10 bit register, the centered point
 loop_count = 1 # Count of loop iterations
 sample_rate = 5000 # Sampling rate in Hz
 interval = 1/sample_rate # Interval between loop iterations
@@ -50,29 +35,31 @@ threshold = 0.2
 # Array for holding samples
 samples = []
 
+# Record start time of loop
 startDate = datetime.now()
-count = 0
 
 while True:
+	# Read the ADC Value
+	adc_value = ReadChannel(0)
+
 	# Check to illuimate the LED if the threshold is crossed
-	#if chan0.voltage * (1-threshold) > chan0.voltage:
-	#	GPIO.output(19,GPIO.HIGH)
-	#	time.sleep(0.1)
-	#	GPIO.output(19,GPIO.LOW)
+	if adc_value * (1-threshold) > moving_avg:
+		GPIO.output(19,GPIO.HIGH)
+		time.sleep(0.1)
+		GPIO.output(19,GPIO.LOW)
 
 	# # Check if loop count exceeds 1000000
-	# if loop_count > 1000000:
-	# 	loop_count = 1
-	# 	avg_count = 0
+	# if loop_count > 1000:
+		loop_count = 1
+		avg_count = 0
 
 	# # Calculate the moving average
-	# avg_count += chan0.voltage	
-	# moving_avg = avg_count / loop_count
-	# loop_count += 1
+	avg_count += adc_value	
+	moving_avg = avg_count / loop_count
+	loop_count += 1
 
-	# Append the 16 bit voltage value
-	samples.append(ReadChannel(0))
-	count += 1
+	# Append the 10 bit voltage value
+	samples.append(adc_value)
 	
 	# check if the escape button is pressed
 	if GPIO.input(12) == GPIO.HIGH:
@@ -82,6 +69,7 @@ while True:
 	# End of Loop
 	time.sleep(interval)
 
+# Record the end time of the loop
 endDate = datetime.now()
 
 # check if output exists and delete if it does
@@ -98,5 +86,6 @@ for sample in samples:
 	f.write(str(sample) + "\n")
 f.close()
 
-print("count" + str(count))
-print("time: " + str(deltaDate.total_seconds()))
+# Print the final data
+print("count " + str(count) + " samples")
+print("time: " + str(deltaDate.total_seconds()) + "s")
