@@ -26,7 +26,7 @@ def ReadChannel(channel):
 avg_count = 0 # A count of the total
 moving_avg = (2**10) / 2 # half point of a 10 bit register, the centered point
 loop_count = 1 # Count of loop iterations
-sample_rate = 5000 # Sampling rate in Hz
+sample_rate = 10000 # Sampling rate in Hz
 interval = 1/sample_rate # Interval between loop iterations
 
 # Threshold of stroke to background noise
@@ -80,12 +80,12 @@ if os.path.exists("output.txt"):
 f = open("output.txt", "a")
 deltaDate = endDate - startDate
 # Write the time in seconds of recording
-f.write("d: " + str(deltaDate.total_seconds()) + "," + str(count) + "\n")
+f.write("d: " + str(deltaDate.total_seconds()) + "," + str(loop_count) + "\n")
 # Continue writing the data
 for sample in samples:
 	f.write(str(sample) + "\n")
 f.close()
 
 # Print the final data
-print("count " + str(count) + " samples")
+print("count " + str(loop_count) + " samples")
 print("time: " + str(deltaDate.total_seconds()) + "s")
