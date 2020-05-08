@@ -8,8 +8,6 @@ from adafruit_mcp3xxx.analog_in import AnalogIn
 import RPi.GPIO as GPIO
 from datetime import datetime
 
-import spidev
-
 # GPIO info
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
@@ -17,31 +15,21 @@ GPIO.setup(19, GPIO.OUT)
 GPIO.setup(12, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
  
 # create the spi bus
-#spi = busio.SPI(clock=board.SCK, MISO=board.MISO, MOSI=board.MOSI)
+spi = busio.SPI(clock=board.SCK, MISO=board.MISO, MOSI=board.MOSI)
  
 # create the cs (chip select)
-#cs = digitalio.DigitalInOut(board.D22)
+cs = digitalio.DigitalInOut(board.D22)
  
 # create the mcp object
-#mcp = MCP.MCP3008(spi, cs)
+mcp = MCP.MCP3008(spi, cs)
  
 # create an analog input channel on pin 0
-#chan0 = AnalogIn(mcp, MCP.P0)
-
-# Open SPI bus
-spi = spidev.SpiDev()
-spi.open(0,0)
-spi.max_speed_hz = 50000
-
-def ReadChannel(channel):
-    adc = spi.xfer2([1,(8+channel)<<4,0])
-    data = ((adc[1]&3) << 8) + adc[2]
-    return data
+chan0 = AnalogIn(mcp, MCP.P0)
 
 avg_count = 0 # A count of the total
 moving_avg = 1.65 # half of 3.3V, the centered point
 loop_count = 1 # Count of loop iterations
-sample_rate = 5000 # Sampling rate in Hz
+sample_rate = 100 # Sampling rate in Hz
 interval = 1/sample_rate # Interval between loop iterations
 
 # Threshold of stroke to background noise
@@ -71,8 +59,9 @@ while True:
 	# loop_count += 1
 
 	# Append the 16 bit voltage value
-	samples.append(ReadChannel(0))
+	samples.append(chan0.value)
 	count += 1
+	print(str(chan0.value) + ", " + str(chan0.voltage) + "V")
 	
 	# check if the escape button is pressed
 	if GPIO.input(12) == GPIO.HIGH:
@@ -92,7 +81,7 @@ if os.path.exists("output.txt"):
 f = open("output.txt", "a")
 deltaDate = endDate - startDate
 # Write the time in seconds of recording
-f.write("d: " + str(deltaDate.total_seconds()) + "," + str(count) + "\n")
+f.write("d: " + str(deltaDate.total_seconds()))
 # Continue writing the data
 for sample in samples:
 	f.write(str(sample) + "\n")
