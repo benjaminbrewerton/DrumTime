@@ -13,7 +13,7 @@ GPIO.setup(12, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 # Open SPI bus
 spi = spidev.SpiDev()
 spi.open(0,0)
-spi.max_speed_hz = 50000
+spi.max_speed_hz = 1000000
 
 # Function to query the ADC
 def ReadChannel(channel):
@@ -26,11 +26,11 @@ def ReadChannel(channel):
 avg_count = 0 # A count of the total
 moving_avg = (2**10) / 2 # half point of a 10 bit register, the centered point
 loop_count = 1 # Count of loop iterations
-sample_rate = 10000 # Sampling rate in Hz
+sample_rate = 3000 # Sampling rate in Hz
 interval = 1/sample_rate # Interval between loop iterations
 
 # Threshold of stroke to background noise
-threshold = 0.2
+threshold = 0.3
 
 # Array for holding samples
 samples = []
@@ -49,7 +49,7 @@ while True:
 		GPIO.output(19,GPIO.LOW)
 
 	# # Check if loop count exceeds 1000000
-	# if loop_count > 1000:
+	if loop_count > 100000:
 		loop_count = 1
 		avg_count = 0
 
