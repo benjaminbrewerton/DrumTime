@@ -3,6 +3,10 @@ import time
 import RPi.GPIO as GPIO
 from datetime import datetime
 import spidev
+from PIL import Image, ImageDraw, ImageFont
+import adafruit_ssd1306
+import board
+import digitalio
 
 # GPIO info
 GPIO.setmode(GPIO.BCM)
@@ -14,6 +18,59 @@ GPIO.setup(12, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 spi = spidev.SpiDev()
 spi.open(0,0)
 spi.max_speed_hz = 1000000
+
+# OLED info
+WIDTH = 128
+HEIGHT = 64  # Change to 64 if needed
+BORDER = 5
+
+# Use for I2C.
+i2c = board.I2C()
+oled = adafruit_ssd1306.SSD1306_I2C(WIDTH, HEIGHT, i2c, addr=0x3d, reset=oled_reset)
+
+# Update the count on the screen
+count = 0
+
+def incrementCount(num):
+    count+=1 # Increment the Count
+    # Clear display.
+    oled.fill(0)
+    oled.show()
+
+    # Create blank image for drawing.
+    # Make sure to create image with mode '1' for 1-bit color.
+    image = Image.new("1", (oled.width, oled.height))
+
+    # Get drawing object to draw on image.
+    draw = ImageDraw.Draw(image)
+
+    # Draw a white background
+    draw.rectangle((0, 0, oled.width, oled.height), outline=255, fill=255)
+
+    # Draw a smaller inner rectangle
+    draw.rectangle(
+        (BORDER, BORDER, oled.width - BORDER - 1, oled.height - BORDER - 1),
+        outline=0,
+        fill=0,
+    )
+
+    # Load default font.
+    font = ImageFont.load_default()
+
+    # Draw Some Text
+    text = str(count)
+    (font_width, font_height) = font.getsize(text)
+    draw.text(
+        (oled.width // 2 - font_width // 2, oled.height // 2 - font_height // 2),
+        text,
+        font=font,
+        fill=255,
+    )
+
+    # Display image
+    oled.image(image)
+    oled.show()
+
 
 # Function to query the ADC
 def ReadChannel(channel):
@@ -54,13 +111,13 @@ while True:
 		avg_count = 0
 
 	# # Calculate the moving average
-	avg_count += adc_value	
+	avg_count += adc_value
 	moving_avg = avg_count / loop_count
 	loop_count += 1
 
 	# Append the 10 bit voltage value
 	samples.append(adc_value)
-	
+
 	# check if the escape button is pressed
 	if GPIO.input(12) == GPIO.HIGH:
 		print("\n\nDrumTime is now exiting")
