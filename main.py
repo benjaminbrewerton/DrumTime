@@ -14,6 +14,9 @@ GPIO.setwarnings(False)
 GPIO.setup(19, GPIO.OUT)
 GPIO.setup(12, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
+# Define the Reset Pin
+oled_reset = digitalio.DigitalInOut(board.D18)
+
 # Open SPI bus
 spi = spidev.SpiDev()
 spi.open(0,0)
