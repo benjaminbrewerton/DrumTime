@@ -11,7 +11,7 @@ import digitalio
 # GPIO info
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
-GPIO.setup(19, GPIO.OUT)
+GPIO.setup(19, GPIO.OUT, initial=GPIO.LOW)
 GPIO.setup(12, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
 # Define the Reset Pin
@@ -27,15 +27,17 @@ WIDTH = 128
 HEIGHT = 64  # Change to 64 if needed
 BORDER = 5
 
+# Update the count on the screen
+screen_count = 0
+
 # Use for I2C.
 i2c = board.I2C()
 oled = adafruit_ssd1306.SSD1306_I2C(WIDTH, HEIGHT, i2c, addr=0x3d, reset=oled_reset)
 
-# Update the count on the screen
-count = 0
+# Function to control the screen
+def incrementCount():
+    screen_count += 1 # Increment the Count
 
-def incrementCount(num):
-    count+=1 # Increment the Count
     # Clear display.
     oled.fill(0)
     oled.show()
@@ -61,7 +63,7 @@ def incrementCount(num):
     font = ImageFont.load_default()
 
     # Draw Some Text
-    text = str(count)
+    text = str(screen_count)
     (font_width, font_height) = font.getsize(text)
     draw.text(
         (oled.width // 2 - font_width // 2, oled.height // 2 - font_height // 2),
@@ -107,6 +109,7 @@ while True:
 		GPIO.output(19,GPIO.HIGH)
 		time.sleep(0.1)
 		GPIO.output(19,GPIO.LOW)
+		incrementCount()
 
 	# # Check if loop count exceeds 1000000
 	if loop_count > 100000:
