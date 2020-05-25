@@ -9,6 +9,7 @@ import board
 import digitalio
 import threading
 from newscreen import loopScreen
+from queue import Queue
 
 # GPIO info
 GPIO.setmode(GPIO.BCM)
@@ -61,6 +62,9 @@ startDate = datetime.now()
 # Last Threshold cross
 crossDate = datetime.now()
 
+# Create the queue to hold the ADC captures
+adc_queue = Queue()
+
 # Print a statement that the listeining is starting
 print("Starting DrumTime with fs: " + str(sample_rate) + "Hz and sensitivity threshold of " + str(threshold*100) + "%")
 
@@ -73,6 +77,7 @@ def loopADC():
 	global doFlash
 	global doSampling
 	global crossDate
+	global adc_queue
 
 
 	while True:
@@ -90,9 +95,9 @@ def loopADC():
 			if not doFlash:
 				GPIO.output(19,GPIO.HIGH)
 				doFlash = True
-			# Put into queue
+			adc_queue.put(1)
 			crossDate = datetime.now() # Update cross time
-			print(str(adc_value) + ", " + str(moving_avg))
+			#print(str(adc_value) + ", " + str(moving_avg))
 		else:
 			avg_count += adc_value
 

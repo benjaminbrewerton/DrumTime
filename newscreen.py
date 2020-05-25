@@ -9,6 +9,7 @@ import os
 import time
 import RPi.GPIO as GPIO
 from datetime import datetime
+from newmain import adc_queue
 
 # GPIO info
 GPIO.setmode(GPIO.BCM)
@@ -43,6 +44,18 @@ def clearDisplay():
 	disp.clear()
 	disp.display()
 
+# Function to draw a diamond with equal side lengths
+# draw = draw object from image canvas
+# x = center x coordinate
+# y = center y coordinate
+# side_length = length of side of diamond
+def drawDiamond(draw, x, y, side_length):
+	# Get the length from the center to the vertex points
+	inner_length = side_length * math.sin(math.pi / 4) # side_length * sqrt(2)/2 = side_length * sin(pi/4 [45 Deg])
+	# Draw as top -> right -> bottom -> left ->>
+	draw.polygon([(x, y - inner_length), (x + inner_length, y), (x, y + inner_length), (y, x - inner_length)], outline=255, fill=255)
+
+
 # Clear initially
 clearDisplay()
 
@@ -63,6 +76,9 @@ draw = ImageDraw.Draw(image)
 # The stroke objects stored as array pairs of [[Hand, Stroke Time]
 strokes = [["L", 0.5], ["R", 0.5], ["R", 0.75], ["L", 1], ["L", 1.5]]
 
+# The current coordinates of strokes on the timeline
+recorded_strokes = []
+
 # Load default font.
 font = ImageFont.load_default()
 
@@ -79,7 +95,7 @@ def loopScreen():
 	global disp
 	global font
 	global fps_int
-
+	global adc_queue
 
 	# Begin While Loop
 	while(True):
@@ -105,9 +121,19 @@ def loopScreen():
 			else:
 				draw.rectangle((stroke_time, (HEIGHT - STROKE_HEIGHT), stroke_time, (HEIGHT - STROKE_HEIGHT * 2)), outline=255, fill=255)
 
+		# Draw the recorded strokes
+		for stroke in recorded_strokes:
+			drawDiamond(draw, stroke, HEIGHT // 2, 3) # Draw the diamond representing the stroke
+
 		# Draw the L & R identifiers
 		draw.text((2, 2), "L", font=font, fill=255)
 		draw.text((2, HEIGHT - 9), "R", font=font, fill=255)
+
+		# Check if the adc_queue is empty
+		if(not adc_queue.empty()):
+			adc_queue.get() # pop the first entry
+			recorded_strokes.append(DIVIDER_WIDTH) # Append the current time
+
 
 		# Display the image
 		disp.image(image)
@@ -122,6 +148,7 @@ def loopScreen():
 		# Reset the dynamic counter
 		if loop_count >= time_window * fps:
 			loop_count = 0
+			recorded_strokes.clear() # Clear the recorded strokes
 
 		loop_count += 1 # Increment the loop count
 		time.sleep(fps_int) # Rest for 1/fps
