@@ -51,7 +51,7 @@ sample_rate = 1000 # Sampling rate in Hz
 interval = 1/sample_rate # Interval between loop iterations
 
 # Threshold of stroke to background noise
-threshold = 0.5
+threshold = 0.35
 
 # Array for holding samples
 samples = []
@@ -126,7 +126,7 @@ def loopADC():
 		time.sleep(interval)
 
 thread1 = threading.Thread(target=loopADC)
-thread2 = threading.Thread(target=loopScreen)
+thread2 = threading.Thread(target=loopScreen,args=(adc_queue,))
 
 # Start the threads
 thread1.start()

@@ -27,7 +27,7 @@ HEIGHT = 64  # Change to 64 if needed
 BORDER = 2
 
 # DESIGN INFO
-DIVIDER_HEIGHT = 2
+DIVIDER_HEIGHT = 1
 DIVIDER_WIDTH = 0
 
 STROKE_HEIGHT = 10
@@ -49,18 +49,15 @@ def clearDisplay():
 # x = center x coordinate
 # y = center y coordinate
 # side_length = length of side of diamond
-def drawDiamond(draw, x, y, side_length):
-	# Get the length from the center to the vertex points
-	inner_length = side_length * math.sin(math.pi / 4) # side_length * sqrt(2)/2 = side_length * sin(pi/4 [45 Deg])
+def drawDiamond(draw, x, y, inner_length):
 	# Draw as top -> right -> bottom -> left ->>
-	draw.polygon([(x, y - inner_length), (x + inner_length, y), (x, y + inner_length), (y, x - inner_length)], outline=255, fill=255)
-
+	draw.polygon([(x, y + inner_length), (x + inner_length, y), (x, y - inner_length), (x - inner_length, y)], outline=255, fill=255)
 
 # Clear initially
 clearDisplay()
 
 # Final Variables
-fps = 10
+fps = 25
 fps_int = 1/fps # Interval for FPS in seconds
 
 # Create image buffer
@@ -82,7 +79,7 @@ recorded_strokes = []
 # Load default font.
 font = ImageFont.load_default()
 
-def loopScreen():
+def loopScreen(adc_queue):
 	global draw
 	global loop_count
 	global fps
@@ -95,7 +92,6 @@ def loopScreen():
 	global disp
 	global font
 	global fps_int
-	#global adc_queue
 
 	# Begin While Loop
 	while(True):
@@ -123,7 +119,7 @@ def loopScreen():
 
 		# Draw the recorded strokes
 		for stroke in recorded_strokes:
-			drawDiamond(draw, stroke, HEIGHT // 2, 3) # Draw the diamond representing the stroke
+			drawDiamond(draw, stroke, HEIGHT // 2, 5) # Draw the diamond representing the stroke
 
 		# Draw the L & R identifiers
 		draw.text((2, 2), "L", font=font, fill=255)
