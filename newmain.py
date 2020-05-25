@@ -44,6 +44,8 @@ def ReadChannel(channel):
 doFlash = True
 # Function to flash the LED for 0.4 seconds
 def flashLED():
+	global doFlash
+
 	while True:
 		if doFlash:
 			GPIO.output(19,GPIO.HIGH)
@@ -80,7 +82,6 @@ def loopADC():
 	global avg_count
 	global loop_counter
 	global interval
-	global doFlash
 
 
 	while True:
@@ -141,6 +142,6 @@ if doSampling:
 		f.write(str(sample) + "\n")
 	f.close()
 
-# Print the final data
-print("count " + str(loop_counter) + " samples")
-print("time: " + str(deltaDate.total_seconds()) + "s")
+	# Print the final data
+	print("count " + str(loop_counter) + " samples")
+	print("time: " + str(deltaDate.total_seconds()) + "s")
