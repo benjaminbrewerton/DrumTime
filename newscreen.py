@@ -9,7 +9,7 @@ import os
 import time
 import RPi.GPIO as GPIO
 from datetime import datetime
-from newmain import adc_queue
+#from newmain import adc_queue
 
 # GPIO info
 GPIO.setmode(GPIO.BCM)
@@ -95,7 +95,7 @@ def loopScreen():
 	global disp
 	global font
 	global fps_int
-	global adc_queue
+	#global adc_queue
 
 	# Begin While Loop
 	while(True):
