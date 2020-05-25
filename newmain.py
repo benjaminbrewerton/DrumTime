@@ -91,7 +91,7 @@ def loopADC():
 		# Check to illuimate the LED if the threshold is crossed
 		if adc_value * (1-threshold) > moving_avg:
 			GPIO.output(19,GPIO.HIGH)
-			if (startDate - datetime.now()).total_seconds() >= 0.4 and doFlash:
+			if (datetime.now() - startDate).total_seconds() >= 0.4 and doFlash:
 				GPIO.output(19,GPIO.LOW)
 
 		# # Check if loop count exceeds 1000000
