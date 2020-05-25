@@ -54,9 +54,9 @@ doFlash = True
 # 			doFlash = False
 
 # Define a thread for the LED to flash on
-led_thread = threading.Thread(target=flashLED)
-# Start the thread
-led_thread.start()
+# led_thread = threading.Thread(target=flashLED)
+# # Start the thread
+# led_thread.start()
 
 avg_count = 0 # A count of the total
 moving_avg = (2**10) / 2 # half point of a 10 bit register, the centered point
