@@ -37,10 +37,23 @@ def ReadChannel(channel):
     data = ((adc[1] & 3) << 8) + adc[2]
     return data
 
+
+doFlash = True
+# Function to flash the LED for 0.4 seconds
+def flashLED():
+	if doFlash:
+		GPIO.output(19,GPIO.HIGH)
+		time.sleep(0.3)
+		GPIO.output(19,GPIO.LOW)
+		doFlash = False
+
+# Define a thread for the LED to flash on
+led_thread = threading.Thread(target=flashLED)
+
 avg_count = 0 # A count of the total
 moving_avg = (2**10) / 2 # half point of a 10 bit register, the centered point
 loop_counter = 1 # Count of loop iterations
-sample_rate = 3000 # Sampling rate in Hz
+sample_rate = 1000 # Sampling rate in Hz
 interval = 1/sample_rate # Interval between loop iterations
 
 # Threshold of stroke to background noise
@@ -69,9 +82,8 @@ def loopADC():
 
 		# Check to illuimate the LED if the threshold is crossed
 		if adc_value * (1-threshold) > moving_avg:
-			GPIO.output(19,GPIO.HIGH)
-			time.sleep(0.3)
-			GPIO.output(19,GPIO.LOW)
+			doFlash = True
+			led_thread.start()
 
 		# # Check if loop count exceeds 1000000
 		#if loop_count > 100000:
@@ -91,16 +103,15 @@ def loopADC():
 
 		# check if the escape button is pressed
 		if GPIO.input(12) == GPIO.HIGH:
-			print("\n\nDrumTime is now exiting")
+			print("\nDrumTime ADC is now exiting")
 			break
-
-		print(adc_value)
 
 		# End of Loop
 		time.sleep(interval)
 
 thread1 = threading.Thread(target=loopADC)
 thread2 = threading.Thread(target=loopScreen)
+
 # Start the threads
 thread1.start()
 thread2.start()
