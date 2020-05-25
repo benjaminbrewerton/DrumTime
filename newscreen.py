@@ -115,7 +115,7 @@ def loopScreen():
 
 		# check if the escape button is pressed
 		if GPIO.input(12) == GPIO.HIGH:
-			print("\n\nDrumTime is now exiting")
+			print("\nDrumTime Screen Interface is now exiting")
 			clearDisplay()
 			break
 

@@ -83,6 +83,7 @@ def loopADC():
 	global loop_counter
 	global interval
 	global doFlash
+	global doSampling
 
 
 	while True:
