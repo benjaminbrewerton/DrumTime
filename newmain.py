@@ -29,6 +29,9 @@ WIDTH = 128
 HEIGHT = 64  # Change to 64 if needed
 BORDER = 5
 
+# Variables
+doSampling = False
+
 # Function to query the ADC
 def ReadChannel(channel):
 	# Transfer 1000 to read channel 0 with the D0-D2 bits
@@ -99,7 +102,8 @@ def loopADC():
 		#print(moving_avg)
 
 		# Append the 10 bit voltage value
-		#samples.append(adc_value)
+		if doSampling:
+			samples.append(adc_value)
 
 		# check if the escape button is pressed
 		if GPIO.input(12) == GPIO.HIGH:
@@ -119,20 +123,21 @@ thread2.start()
 # Record the end time of the loop
 endDate = datetime.now()
 
-# check if output exists and delete if it does
-if os.path.exists("output.txt"):
-	os.remove("output.txt")
+if doSampling:
+	# check if output exists and delete if it does
+	if os.path.exists("output.txt"):
+		os.remove("output.txt")
 
-# Write output to file
-f = open("output.txt", "a")
-deltaDate = endDate - startDate
-# Write the time in seconds of recording
-f.write("d: " + str(deltaDate.total_seconds()) + "," + str(loop_count) + "\n")
-# Continue writing the data
-for sample in samples:
-	f.write(str(sample) + "\n")
-f.close()
+	# Write output to file
+	f = open("output.txt", "a")
+	deltaDate = endDate - startDate
+	# Write the time in seconds of recording
+	f.write("d: " + str(deltaDate.total_seconds()) + "," + str(loop_counter) + "\n")
+	# Continue writing the data
+	for sample in samples:
+		f.write(str(sample) + "\n")
+	f.close()
 
 # Print the final data
-print("count " + str(loop_count) + " samples")
+print("count " + str(loop_counter) + " samples")
 print("time: " + str(deltaDate.total_seconds()) + "s")
