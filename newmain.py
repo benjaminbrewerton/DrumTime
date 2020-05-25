@@ -42,16 +42,16 @@ def ReadChannel(channel):
 
 
 doFlash = True
-# Function to flash the LED for 0.4 seconds
-def flashLED():
-	global doFlash
+# # Function to flash the LED for 0.4 seconds
+# def flashLED():
+# 	global doFlash
 
-	while True:
-		if doFlash:
-			GPIO.output(19,GPIO.HIGH)
-			time.sleep(0.3)
-			GPIO.output(19,GPIO.LOW)
-			doFlash = False
+# 	while True:
+# 		if doFlash:
+# 			GPIO.output(19,GPIO.HIGH)
+# 			time.sleep(0.3)
+# 			GPIO.output(19,GPIO.LOW)
+# 			doFlash = False
 
 # Define a thread for the LED to flash on
 led_thread = threading.Thread(target=flashLED)
@@ -90,7 +90,9 @@ def loopADC():
 
 		# Check to illuimate the LED if the threshold is crossed
 		if adc_value * (1-threshold) > moving_avg:
-			doFlash = True
+			GPIO.output(19,GPIO.HIGH)
+			if (startDate - datetime.now()).total_seconds() >= 0.4 and doFlash:
+				GPIO.output(19,GPIO.LOW)
 
 		# # Check if loop count exceeds 1000000
 		#if loop_count > 100000:
