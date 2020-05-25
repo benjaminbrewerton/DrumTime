@@ -50,7 +50,7 @@ sample_rate = 1000 # Sampling rate in Hz
 interval = 1/sample_rate # Interval between loop iterations
 
 # Threshold of stroke to background noise
-threshold = 0.3
+threshold = 0.5
 
 # Array for holding samples
 samples = []
@@ -72,6 +72,7 @@ def loopADC():
 	global interval
 	global doFlash
 	global doSampling
+	global crossDate
 
 
 	while True:
@@ -85,12 +86,15 @@ def loopADC():
 
 
 		# Check to illuimate the LED if the threshold is crossed
-		if adc_value * (1-threshold) > moving_avg and ((datetime.now() - crossDate).total_seconds() >= 0.3):
+		if adc_value * (1-threshold) > moving_avg and ((datetime.now() - crossDate).total_seconds() >= 0.4):
 			if not doFlash:
 				GPIO.output(19,GPIO.HIGH)
 				doFlash = True
 			# Put into queue
-			print("triggered threshold")
+			crossDate = datetime.now() # Update cross time
+			print(str(adc_value) + ", " + str(moving_avg))
+		else:
+			avg_count += adc_value
 
 		# # Check if loop count exceeds 1000000
 		#if loop_count > 100000:
@@ -98,7 +102,6 @@ def loopADC():
 		#	avg_count = 0
 
 		# # Calculate the moving average
-		avg_count += adc_value
 		moving_avg = avg_count / loop_counter
 		loop_counter += 1
 
