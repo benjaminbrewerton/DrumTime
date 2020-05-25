@@ -14,8 +14,7 @@ from datetime import datetime
 # GPIO info
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
-GPIO.setup(19, GPIO.OUT, initial=GPIO.LOW) # LED
-GPIO.setup(12, GPIO.IN, pull_up_down=GPIO.PUD_DOWN) # BUTTON
+GPIO.setup(22, GPIO.OUT, initial=GPIO.LOW) # Green LED
 
 # Define the Reset Pin
 #oled_reset = digitalio.DigitalInOut(board.D18)
@@ -57,7 +56,7 @@ def drawDiamond(draw, x, y, inner_length):
 clearDisplay()
 
 # Final Variables
-fps = 25
+fps = 30
 fps_int = 1/fps # Interval for FPS in seconds
 
 # Create image buffer
@@ -66,6 +65,7 @@ image = Image.new('1', (WIDTH, HEIGHT))
 # Variable for tracking time
 loop_count = 0
 time_window = 2 # Seconds to show in the view
+stroke_illuminate_sensitivity = 0.15 # How sensitive should it be to light up the stroke now LED
 
 # Create drawing object.
 draw = ImageDraw.Draw(image)
@@ -116,6 +116,13 @@ def loopScreen(adc_queue):
 				draw.rectangle((stroke_time, STROKE_HEIGHT, stroke_time, STROKE_HEIGHT * 2), outline=255, fill=255)
 			else:
 				draw.rectangle((stroke_time, (HEIGHT - STROKE_HEIGHT), stroke_time, (HEIGHT - STROKE_HEIGHT * 2)), outline=255, fill=255)
+
+			diff_back = stroke_time - stroke_illuminate_sensitivity # The bounds of sensing a stroke timing
+			diff_for = stroke_time + stroke_illuminate_sensitivity
+			if(scaled_time >= diff_back and scaled_time <= diff_for and GPIO.input(22) == 0):
+				GPIO.output(22, GPIO.HIGH) # Output green to the LED
+			else:
+				GPIO.output(22, GPIO.LOW) # Turn off when out of bounds
 
 		# Draw the recorded strokes
 		for stroke in recorded_strokes:
