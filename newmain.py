@@ -40,23 +40,8 @@ def ReadChannel(channel):
     data = ((adc[1] & 3) << 8) + adc[2]
     return data
 
-
+# Control the LED flash
 doFlash = True
-# # Function to flash the LED for 0.4 seconds
-# def flashLED():
-# 	global doFlash
-
-# 	while True:
-# 		if doFlash:
-# 			GPIO.output(19,GPIO.HIGH)
-# 			time.sleep(0.3)
-# 			GPIO.output(19,GPIO.LOW)
-# 			doFlash = False
-
-# Define a thread for the LED to flash on
-# led_thread = threading.Thread(target=flashLED)
-# # Start the thread
-# led_thread.start()
 
 avg_count = 0 # A count of the total
 moving_avg = (2**10) / 2 # half point of a 10 bit register, the centered point
@@ -72,6 +57,9 @@ samples = []
 
 # Record start time of loop
 startDate = datetime.now()
+
+# Last Threshold cross
+crossDate = datetime.now()
 
 # Print a statement that the listeining is starting
 print("Starting DrumTime with fs: " + str(sample_rate) + "Hz and sensitivity threshold of " + str(threshold*100) + "%")
@@ -97,9 +85,12 @@ def loopADC():
 
 
 		# Check to illuimate the LED if the threshold is crossed
-		if adc_value * (1-threshold) > moving_avg:
-			GPIO.output(19,GPIO.HIGH)
-			doFlash = True
+		if adc_value * (1-threshold) > moving_avg and ((datetime.now() - crossDate).total_seconds() >= 0.3):
+			if not doFlash:
+				GPIO.output(19,GPIO.HIGH)
+				doFlash = True
+			# Put into queue
+			print("triggered threshold")
 
 		# # Check if loop count exceeds 1000000
 		#if loop_count > 100000:
