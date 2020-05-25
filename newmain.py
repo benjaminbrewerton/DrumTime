@@ -82,17 +82,23 @@ def loopADC():
 	global avg_count
 	global loop_counter
 	global interval
+	global doFlash
 
 
 	while True:
 		# Read the ADC Value
 		adc_value = ReadChannel(0)
 
+		# Check whether to turn the LED off
+		if (doFlash and (datetime.now() - startDate).total_seconds()) >= 0.8:
+			doFlash = False
+			GPIO.output(19,GPIO.LOW)
+
+
 		# Check to illuimate the LED if the threshold is crossed
 		if adc_value * (1-threshold) > moving_avg:
 			GPIO.output(19,GPIO.HIGH)
-			if (datetime.now() - startDate).total_seconds() >= 0.4 and doFlash:
-				GPIO.output(19,GPIO.LOW)
+			doFlash = True
 
 		# # Check if loop count exceeds 1000000
 		#if loop_count > 100000:
