@@ -11,7 +11,7 @@ import digitalio
 # GPIO info
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
-GPIO.setup(19, GPIO.OUT)
+GPIO.setup(19, GPIO.OUT, initial=GPIO.LOW)
 GPIO.setup(12, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
 # Define the Reset Pin
@@ -27,15 +27,17 @@ WIDTH = 128
 HEIGHT = 64  # Change to 64 if needed
 BORDER = 5
 
+# Update the count on the screen
+screen_count = 0
+
 # Use for I2C.
 i2c = board.I2C()
 oled = adafruit_ssd1306.SSD1306_I2C(WIDTH, HEIGHT, i2c, addr=0x3d, reset=oled_reset)
 
-# Update the count on the screen
-count = 0
-
+# Function to control the screen
 def incrementCount(num):
-    count+=1 # Increment the Count
+ # Increment the Count
+
     # Clear display.
     oled.fill(0)
     oled.show()
@@ -61,7 +63,11 @@ def incrementCount(num):
     font = ImageFont.load_default()
 
     # Draw Some Text
+<<<<<<< HEAD
     text = "Hello World"
+=======
+    text = str(num)
+>>>>>>> c1a34b02e1252067cd220283a3e5a6811b10f238
     (font_width, font_height) = font.getsize(text)
     draw.text(
         (oled.width // 2 - font_width // 2, oled.height // 2 - font_height // 2),
@@ -98,6 +104,14 @@ samples = []
 # Record start time of loop
 startDate = datetime.now()
 
+screen_count = 0
+
+# Start screen showing 0
+incrementCount(0)
+
+# Print a statement that the listeining is starting
+print("Starting DrumTime with fs: " + str(sample_rate) + "Hz and sensitivity threshold of " + str(threshold*100) + "%")
+
 while True:
 	# Read the ADC Value
 	adc_value = ReadChannel(0)
@@ -105,18 +119,23 @@ while True:
 	# Check to illuimate the LED if the threshold is crossed
 	if adc_value * (1-threshold) > moving_avg:
 		GPIO.output(19,GPIO.HIGH)
-		time.sleep(0.1)
+		time.sleep(0.3)
 		GPIO.output(19,GPIO.LOW)
+		screen_count += 1
+		incrementCount(screen_count)
 
 	# # Check if loop count exceeds 1000000
-	if loop_count > 100000:
-		loop_count = 1
-		avg_count = 0
+	#if loop_count > 100000:
+	#	loop_count = 1
+	#	avg_count = 0
 
 	# # Calculate the moving average
 	avg_count += adc_value
 	moving_avg = avg_count / loop_count
 	loop_count += 1
+	
+	#print(adc_value)
+	#print(moving_avg)
 
 	# Append the 10 bit voltage value
 	samples.append(adc_value)
