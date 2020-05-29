@@ -58,7 +58,7 @@ def drawDiamond(draw, x, y, inner_length):
 NAV_SEPARATION = 15 # Actually 2x this amount of separation
 PLAY_PAUSE_LOC = WIDTH // 2 - NAV_SEPARATION
 STOP_LOC = WIDTH // 2 + NAV_SEPARATION
-NAV_BUTTON_HEIGHT = 8
+NAV_BUTTON_HEIGHT = 6
 
 # Functions to draw the navigation Functions
 def drawPlay(draw):
@@ -89,7 +89,7 @@ image = Image.new('1', (WIDTH, HEIGHT))
 # Variable for tracking time
 loop_count = 0
 time_window = 2 # Seconds to show in the view
-stroke_illuminate_sensitivity = 0.15 # How sensitive should it be to light up the stroke now LED
+stroke_illuminate_sensitivity = 0.075 # How sensitive should it be to light up the stroke now LED
 
 # Create drawing object.
 draw = ImageDraw.Draw(image)
@@ -108,8 +108,11 @@ font = ImageFont.load_default()
 draw.text((2, 0), "L", font=font, fill=255)
 draw.text((2, HEIGHT - 9), "R", font=font, fill=255)
 # Draw the pause and stop buttons
-drawStop(draw);
-drawPause(draw);
+drawStop(draw)
+drawPause(draw)
+
+# LED Stopping Boolean
+LEDStop = False
 
 def loopScreen(adc_queue):
 	global draw
@@ -124,6 +127,7 @@ def loopScreen(adc_queue):
 	global disp
 	global font
 	global fps_int
+	global LEDStop
 
 	# Begin While Loop
 	while(True):
@@ -135,13 +139,16 @@ def loopScreen(adc_queue):
 		# Draw the static divider
 		draw.rectangle((0, HEIGHT // 2, WIDTH, HEIGHT // 2), outline=255, fill=255)
 
+		raw_time = loop_count / fps
+
 		# Get the current scaled time
-		scaled_time = loop_count / (fps * time_window)
+		scaled_time = raw_time / time_window
 
 		# Draw the dynamic divider on the time axis
 		DIVIDER_WIDTH = math.floor(scaled_time * WIDTH)
 		draw.rectangle((0, HEIGHT // 2 - DIVIDER_HEIGHT, DIVIDER_WIDTH, HEIGHT // 2 + DIVIDER_HEIGHT), outline=255, fill=255)
 
+		LEDStop = False # Set the LED to be stopped if needed
 		# Draw the strokes dynamically
 		for stroke in strokes:
 			stroke_time = (stroke[1] / time_window) * WIDTH
@@ -149,22 +156,33 @@ def loopScreen(adc_queue):
 				draw.rectangle((stroke_time, STROKE_HEIGHT, stroke_time, STROKE_HEIGHT * 2), outline=255, fill=255)
 			else:
 				draw.rectangle((stroke_time, (HEIGHT - STROKE_HEIGHT), stroke_time, (HEIGHT - STROKE_HEIGHT * 2)), outline=255, fill=255)
-
-			diff_back = stroke_time - stroke_illuminate_sensitivity # The bounds of sensing a stroke timing
-			diff_for = stroke_time + stroke_illuminate_sensitivity
-			if(scaled_time >= diff_back and scaled_time <= diff_for and GPIO.input(22) == 0):
-				GPIO.output(22, GPIO.HIGH) # Output green to the LED
-			else:
+			
+			
+			diff_back = stroke[1] - stroke_illuminate_sensitivity # The bounds of sensing a stroke timing
+			diff_for = stroke[1] + stroke_illuminate_sensitivity
+			
+			#print("BACK: " + str(diff_back) + " FORW: " + str(diff_for) + " TIME: " + str(raw_time))
+			if raw_time >= diff_back and raw_time <= diff_for:
+				if not LEDStop:
+					GPIO.output(22, GPIO.HIGH) # Output green to the LED
+					LEDStop = True
+			elif not LEDStop:
 				GPIO.output(22, GPIO.LOW) # Turn off when out of bounds
-
+				
 		# Draw the recorded strokes
 		for stroke in recorded_strokes:
 			drawDiamond(draw, stroke, HEIGHT // 2, 5) # Draw the diamond representing the stroke
 
 		# Check if the adc_queue is empty
 		if(not adc_queue.empty()):
-			adc_queue.get() # pop the first entry
-			recorded_strokes.append(DIVIDER_WIDTH) # Append the current time
+			val = adc_queue.get() # pop the first entry
+			
+			if val == 1:
+				recorded_strokes.append(DIVIDER_WIDTH) # Append the current time
+			elif val == 2:
+				drawPlay() # Display the play button
+			elif val == 3:
+				drawPause() # Display the Pause Button
 
 
 		# Display the image
