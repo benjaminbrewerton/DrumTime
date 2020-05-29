@@ -7,6 +7,7 @@ import math
 import digitalio
 import os
 import time
+import math
 import RPi.GPIO as GPIO
 from datetime import datetime
 #from newmain import adc_queue
@@ -32,6 +33,8 @@ DIVIDER_WIDTH = 0
 STROKE_HEIGHT = 10
 STROKE_WIDTH = 2
 
+STATIC_WINDOW_BORDER = 9 # Where the canvas should not draw to due to the placement of static images
+
 # 128x64 display with hardware I2C:
 disp = Adafruit_SSD1306.SSD1306_128_64(rst=oled_reset, i2c_address=0x3D)
 
@@ -49,8 +52,29 @@ def clearDisplay():
 # y = center y coordinate
 # side_length = length of side of diamond
 def drawDiamond(draw, x, y, inner_length):
-	# Draw as top -> right -> bottom -> left ->>
+	# Draw as top -> right -> bottom -> left ->> top
 	draw.polygon([(x, y + inner_length), (x + inner_length, y), (x, y - inner_length), (x - inner_length, y)], outline=255, fill=255)
+
+NAV_SEPARATION = 15 # Actually 2x this amount of separation
+PLAY_PAUSE_LOC = WIDTH // 2 - NAV_SEPARATION
+STOP_LOC = WIDTH // 2 + NAV_SEPARATION
+NAV_BUTTON_HEIGHT = 8
+
+# Functions to draw the navigation Functions
+def drawPlay(draw):
+	# Draw a rotated triangle
+	# Defined from the bottom point of the play button
+	draw.polygon([(PLAY_PAUSE_LOC, HEIGHT), (PLAY_PAUSE_LOC, HEIGHT - NAV_BUTTON_HEIGHT), (PLAY_PAUSE_LOC + NAV_BUTTON_HEIGHT, HEIGHT - (NAV_BUTTON_HEIGHT // 2))], outline=255, fill = 255)
+# Function to draw the pause button
+def drawPause(draw):
+	# Draw rectangles from top left to bottom right corners
+	# Left hand vertical line
+	draw.rectangle((PLAY_PAUSE_LOC - NAV_BUTTON_HEIGHT // 2, HEIGHT - NAV_BUTTON_HEIGHT, PLAY_PAUSE_LOC - NAV_BUTTON_HEIGHT // 2 + 1, HEIGHT), outline=255, fill=255)
+	# Right hand vertical line
+	draw.rectangle((PLAY_PAUSE_LOC + NAV_BUTTON_HEIGHT // 2, HEIGHT - NAV_BUTTON_HEIGHT, PLAY_PAUSE_LOC + NAV_BUTTON_HEIGHT // 2 - 1, HEIGHT), outline=255, fill=255)
+def drawStop(draw):
+	# Draw a solid square
+	draw.rectangle((STOP_LOC, HEIGHT - NAV_BUTTON_HEIGHT, STOP_LOC + NAV_BUTTON_HEIGHT, HEIGHT), outline=255, fill=255)
 
 # Clear initially
 clearDisplay()
@@ -79,6 +103,14 @@ recorded_strokes = []
 # Load default font.
 font = ImageFont.load_default()
 
+# Draw default images
+# Draw the L & R identifiers
+draw.text((2, 0), "L", font=font, fill=255)
+draw.text((2, HEIGHT - 9), "R", font=font, fill=255)
+# Draw the pause and stop buttons
+drawStop(draw);
+drawPause(draw);
+
 def loopScreen(adc_queue):
 	global draw
 	global loop_count
@@ -97,7 +129,8 @@ def loopScreen(adc_queue):
 	while(True):
 		# Clear the display
 		# Clear image buffer by drawing a black filled box.
-		draw.rectangle((0,0, WIDTH, HEIGHT), outline=0, fill=0)
+		# Exclude the bottom and top sections where static images are drawn
+		draw.rectangle((0, STATIC_WINDOW_BORDER, WIDTH, HEIGHT - STATIC_WINDOW_BORDER), outline=0, fill=0)
 
 		# Draw the static divider
 		draw.rectangle((0, HEIGHT // 2, WIDTH, HEIGHT // 2), outline=255, fill=255)
@@ -127,10 +160,6 @@ def loopScreen(adc_queue):
 		# Draw the recorded strokes
 		for stroke in recorded_strokes:
 			drawDiamond(draw, stroke, HEIGHT // 2, 5) # Draw the diamond representing the stroke
-
-		# Draw the L & R identifiers
-		draw.text((2, 2), "L", font=font, fill=255)
-		draw.text((2, HEIGHT - 9), "R", font=font, fill=255)
 
 		# Check if the adc_queue is empty
 		if(not adc_queue.empty()):
