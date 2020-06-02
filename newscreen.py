@@ -10,7 +10,14 @@ import time
 import math
 import RPi.GPIO as GPIO
 from datetime import datetime
-#from newmain import adc_queue
+import adafruit_dotstar as dotstar
+
+
+# 24 and 23
+# Using a DotStar Digital LED Strip with 28 LEDs connected to digital pins
+dots = dotstar.DotStar(board.SCK, board.MOSI, 28, brightness=0.2)
+# Clear the strip
+dots.fill(0)
 
 # GPIO info
 GPIO.setmode(GPIO.BCM)
@@ -76,6 +83,22 @@ def drawStop(draw):
 	# Draw a solid square
 	draw.rectangle((STOP_LOC, HEIGHT - NAV_BUTTON_HEIGHT, STOP_LOC + NAV_BUTTON_HEIGHT, HEIGHT), outline=255, fill=255)
 
+
+LED_COUNT = 28
+# Functions for controlling the LED Strip
+def showRightStroke():
+	for i in range(LED_COUNT // 2):
+		dots[i] = (62, 168, 50)
+def clearRightStroke():
+	for i in range(LED_COUNT // 2):
+		dots[i] = (0, 0, 0)
+def showLeftStroke():
+	for i in range(LED_COUNT // 2, LED_COUNT):
+		dots[i] = (62, 168, 50)
+def clearLeftStroke():	
+        for i in range(LED_COUNT // 2, LED_COUNT):
+                dots[i] = (0, 0, 0)
+
 # Clear initially
 clearDisplay()
 
@@ -89,7 +112,7 @@ image = Image.new('1', (WIDTH, HEIGHT))
 # Variable for tracking time
 loop_count = 0
 time_window = 2 # Seconds to show in the view
-stroke_illuminate_sensitivity = 0.075 # How sensitive should it be to light up the stroke now LED
+stroke_illuminate_sensitivity = 0.05 # How sensitive should it be to light up the stroke now LED
 
 # Create drawing object.
 draw = ImageDraw.Draw(image)
@@ -113,6 +136,24 @@ drawPause(draw)
 
 # LED Stopping Boolean
 LEDStop = False
+RightStop = False
+LeftStop = False
+Stoppers = []
+for stroke in strokes:
+	Stoppers.append([stroke[1], [stroke[0], False]]) # Append each stroke to the array
+# Store as [Time, [L/R, LED Status]]
+
+# Define a function to search through the Stoppers for a time
+def getStopper(index): # Hand type, 1 = left, 2 = right
+	queries = []
+	for i in range(len(Stoppers)):
+		if Stoppers[i][0] == index:
+			queries.append([Stoppers[i][1][0], i]) # append the query as [Stroke (L/R), index]
+	if len(queries) < 2:
+		return [queries[0][1]] # Return the index
+	else:
+		return [queries[0][1], queries[1][1]]
+	return []
 
 def loopScreen(adc_queue):
 	global draw
@@ -128,6 +169,9 @@ def loopScreen(adc_queue):
 	global font
 	global fps_int
 	global LEDStop
+	global LeftStop
+	global RightStop
+	global Stoppers
 
 	# Begin While Loop
 	while(True):
@@ -148,7 +192,9 @@ def loopScreen(adc_queue):
 		DIVIDER_WIDTH = math.floor(scaled_time * WIDTH)
 		draw.rectangle((0, HEIGHT // 2 - DIVIDER_HEIGHT, DIVIDER_WIDTH, HEIGHT // 2 + DIVIDER_HEIGHT), outline=255, fill=255)
 
-		LEDStop = False # Set the LED to be stopped if needed
+		#LEDStop = False # Set the LED to be stopped if needed
+		#LeftStop = False
+		#RightStop = False
 		# Draw the strokes dynamically
 		for stroke in strokes:
 			stroke_time = (stroke[1] / time_window) * WIDTH
@@ -161,14 +207,39 @@ def loopScreen(adc_queue):
 			diff_back = stroke[1] - stroke_illuminate_sensitivity # The bounds of sensing a stroke timing
 			diff_for = stroke[1] + stroke_illuminate_sensitivity
 			
-			#print("BACK: " + str(diff_back) + " FORW: " + str(diff_for) + " TIME: " + str(raw_time))
-			if raw_time >= diff_back and raw_time <= diff_for:
-				if not LEDStop:
-					GPIO.output(22, GPIO.HIGH) # Output green to the LED
-					LEDStop = True
-			elif not LEDStop:
-				GPIO.output(22, GPIO.LOW) # Turn off when out of bounds
-				
+			# Stopper Information about the LEDs
+			Stopper_query = getStopper(stroke[1])
+
+			for stopper in Stopper_query:
+				Stopper_hand = Stoppers[stopper][1][0]
+				Stopper_bool = Stoppers[stopper][1][1]
+
+				if raw_time >= diff_back and raw_time <= diff_for:
+					if not LEDStop:
+						GPIO.output(22, GPIO.HIGH) # Output green to the LED
+						LEDStop = True
+					if len(Stopper_query) > 1 and not Stopper_bool:
+						showLeftStroke()
+						showRightStroke()
+						Stoppers[stopper][1][1] = True
+					elif not Stopper_bool:
+						if (stroke[0] == "L" and Stopper_hand == "L"):
+							showLeftStroke()
+						if (stroke[0] == "R" and Stopper_hand == "R"):
+							showRightStroke()
+						Stoppers[stopper][1][1] = True # Update the LED to be triggered
+				else:
+					if LEDStop:
+						GPIO.output(22, GPIO.LOW) # Turn off when out of bounds
+						LEDStop = False
+					if Stopper_bool:
+                                       		if stroke[0] == "L" and Stopper_hand == "L":
+                                                	clearLeftStroke()
+                                        	if stroke[0] == "R" and Stopper_hand == "R":
+                                                	clearRightStroke()
+                                        	Stoppers[stopper][1][1] = False # Update the LED to be triggered
+
+
 		# Draw the recorded strokes
 		for stroke in recorded_strokes:
 			drawDiamond(draw, stroke, HEIGHT // 2, 5) # Draw the diamond representing the stroke
@@ -193,6 +264,7 @@ def loopScreen(adc_queue):
 		if GPIO.input(12) == GPIO.HIGH:
 			print("\nDrumTime Screen Interface is now exiting")
 			clearDisplay()
+			dots.fill(0)
 			break
 
 		# Reset the dynamic counter
