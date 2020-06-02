@@ -106,6 +106,9 @@ load_font = ImageFont.truetype("/home/ben/prac/UniversCondensed.ttf", 24)
 # LED Stopping Boolean
 LEDStop = False
 
+# Program starter
+start_program = False
+
 def loopScreen(adc_queue):
 	global draw
 	global loop_count
@@ -123,9 +126,9 @@ def loopScreen(adc_queue):
 	global start_program
 
 	# Draw the welcome screen
-	draw.text((BORDER, 10), "DrumTime", font=load_font, fill=255)
-	draw.text((BORDER + 10, HEIGHT - HEIGHT // 4), "Press Reset button", font=font, fill=255)
-	draw.text((BORDER + 30, HEIGHT - HEIGHT // 4), "to start!", font=font, fill=255)
+	draw.text((BORDER + 20, 0), "DrumTime", font=load_font, fill=255)
+	draw.text((BORDER + 10, HEIGHT - HEIGHT // 2.5), "Press Reset button", font=font, fill=255)
+	draw.text((BORDER + 34, HEIGHT - HEIGHT // 4), "to start!", font=font, fill=255)
 
 	# Display the image
 	disp.image(image)

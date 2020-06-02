@@ -8,7 +8,7 @@ import adafruit_ssd1306
 import board
 import digitalio
 import threading
-from nostrip import loopScreen
+from nostrip import loopScreen, start_program
 from queue import Queue
 
 # GPIO info
@@ -51,7 +51,8 @@ sample_rate = 1000 # Sampling rate in Hz
 interval = 1/sample_rate # Interval between loop iterations
 
 # Variable for controlling the start of the program
-start_program = False
+#global start_program
+#start_program = False
 
 # Threshold of stroke to background noise
 threshold = 0.35
@@ -71,7 +72,7 @@ adc_queue = Queue()
 # Print a statement that the listeining is starting
 print("Starting DrumTime with fs: " + str(sample_rate) + "Hz and sensitivity threshold of " + str(threshold*100) + "%")
 
-def loopADC():
+def loopADC(start_program):
 	global threshold
 	global moving_avg
 	global avg_count
@@ -129,7 +130,7 @@ def loopADC():
 		time.sleep(interval)
 
 thread1 = threading.Thread(target=loopADC)
-thread2 = threading.Thread(target=loopScreen,args=(adc_queue,start_program,))
+thread2 = threading.Thread(target=loopScreen,args=(adc_queue,))
 
 # Start the threads
 thread1.start()
