@@ -10,7 +10,7 @@ import time
 import math
 import RPi.GPIO as GPIO
 from datetime import datetime
-#from newmain import adc_queue
+from newmain import start_program
 
 # GPIO info
 GPIO.setmode(GPIO.BCM)
@@ -107,7 +107,7 @@ load_font = ImageFont.truetype("/home/ben/prac/UniversCondensed.ttf", 24)
 # LED Stopping Boolean
 LEDStop = False
 
-def loopScreen(adc_queue, start_program):
+def loopScreen(adc_queue):
 	global draw
 	global loop_count
 	global fps
@@ -123,8 +123,9 @@ def loopScreen(adc_queue, start_program):
 	global LEDStop
 
 	# Draw the welcome screen
-	draw.text((BORDER, HEIGHT // 4), "DrumTime", font=load_font, fill=255)
-	draw.text((BORDER, HEIGHT - HEIGHT // 4), "Press Reset button to start!", font=font, fill=255)
+	draw.text((BORDER, 10), "DrumTime", font=load_font, fill=255)
+	draw.text((BORDER + 10, HEIGHT - HEIGHT // 4), "Press Reset button", font=font, fill=255)
+	draw.text((BORDER + 30, HEIGHT - HEIGHT // 4), "to start!", font=font, fill=255)
 
 	# Display the image
 	disp.image(image)
