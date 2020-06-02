@@ -102,19 +102,12 @@ recorded_strokes = []
 
 # Load default font.
 font = ImageFont.load_default()
-
-# Draw default images
-# Draw the L & R identifiers
-draw.text((2, 0), "L", font=font, fill=255)
-draw.text((2, HEIGHT - 9), "R", font=font, fill=255)
-# Draw the pause and stop buttons
-drawStop(draw)
-drawPause(draw)
+load_font = ImageFont.truetype("/home/ben/prac/UniversCondensed.ttf", 24)
 
 # LED Stopping Boolean
 LEDStop = False
 
-def loopScreen(adc_queue):
+def loopScreen(adc_queue, start_program):
 	global draw
 	global loop_count
 	global fps
@@ -129,8 +122,32 @@ def loopScreen(adc_queue):
 	global fps_int
 	global LEDStop
 
+	# Draw the welcome screen
+	draw.text((BORDER, HEIGHT // 4), "DrumTime", font=load_font, fill=255)
+	draw.text((BORDER, HEIGHT - HEIGHT // 4), "Press Reset button to start!", font=font, fill=255)
+
+	# Check if the program needs to be started
+	while not start_program:
+		# check if the start button is pressed
+		if GPIO.input(12) == GPIO.HIGH:
+			clearDisplay()
+			start_program = True # Start the main program
+			break
+
+		time.sleep(0.1) # Sleep for a bit
+
+	# After while loop, draw static images/text
+	# Draw default images
+	# Draw the L & R identifiers
+	draw.text((2, 0), "L", font=font, fill=255)
+	draw.text((2, HEIGHT - 9), "R", font=font, fill=255)
+	# Draw the pause and stop buttons
+	drawStop(draw)
+	drawPause(draw)
+
 	# Begin While Loop
 	while(True):
+
 		# Clear the display
 		# Clear image buffer by drawing a black filled box.
 		# Exclude the bottom and top sections where static images are drawn

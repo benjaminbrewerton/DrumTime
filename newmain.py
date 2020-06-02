@@ -14,8 +14,8 @@ from queue import Queue
 # GPIO info
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
-GPIO.setup(19, GPIO.OUT, initial=GPIO.LOW)
-GPIO.setup(12, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+GPIO.setup(19, GPIO.OUT, initial=GPIO.LOW) # Red LED
+GPIO.setup(12, GPIO.IN, pull_up_down=GPIO.PUD_DOWN) # Terminate Button
 
 # Define the Reset Pin
 oled_reset = digitalio.DigitalInOut(board.D18)
@@ -50,6 +50,9 @@ loop_counter = 1 # Count of loop iterations
 sample_rate = 1000 # Sampling rate in Hz
 interval = 1/sample_rate # Interval between loop iterations
 
+# Variable for controlling the start of the program
+start_program = False
+
 # Threshold of stroke to background noise
 threshold = 0.35
 
@@ -78,9 +81,9 @@ def loopADC():
 	global doSampling
 	global crossDate
 	global adc_queue
+	global start_program
 
-
-	while True:
+	while start_program:
 		# Read the ADC Value
 		adc_value = ReadChannel(0)
 
@@ -126,7 +129,7 @@ def loopADC():
 		time.sleep(interval)
 
 thread1 = threading.Thread(target=loopADC)
-thread2 = threading.Thread(target=loopScreen,args=(adc_queue,))
+thread2 = threading.Thread(target=loopScreen,args=(adc_queue,start_program,))
 
 # Start the threads
 thread1.start()
