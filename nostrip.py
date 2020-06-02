@@ -123,8 +123,8 @@ def loopScreen(adc_queue, start_queue):
 
 	# Draw the welcome screen
 	draw.text((BORDER + 20, 0), "DrumTime", font=load_font, fill=255)
-	draw.text((BORDER + 10, HEIGHT - HEIGHT // 2.5), "Press Reset button", font=font, fill=255)
-	draw.text((BORDER + 34, HEIGHT - HEIGHT // 4), "to start!", font=font, fill=255)
+	draw.text((BORDER + 12, HEIGHT - HEIGHT // 2.5), "Press Play button", font=font, fill=255)
+	draw.text((BORDER + 32, HEIGHT - HEIGHT // 4), "to start!", font=font, fill=255)
 
 	# Display the image
 	disp.image(image)

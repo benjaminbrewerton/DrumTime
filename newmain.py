@@ -16,6 +16,7 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 GPIO.setup(19, GPIO.OUT, initial=GPIO.LOW) # Red LED
 GPIO.setup(12, GPIO.IN, pull_up_down=GPIO.PUD_DOWN) # Terminate Button
+GPIO.setup(6, GPIO.IN, pull_up_down=GPIO.PUD_DOWN) # Play/Pause Button
 
 # Define the Reset Pin
 oled_reset = digitalio.DigitalInOut(board.D18)
@@ -85,8 +86,8 @@ def loopADC():
 	global adc_queue
 
 	while True:
-		# check if the start button is pressed
-		if GPIO.input(12) == GPIO.HIGH:
+		# check if the play button is pressed
+		if GPIO.input(6) == GPIO.HIGH:
 			start_queue.put(1) # Start the program
 			break
 		time.sleep(0.1) # Sleep for a bit
