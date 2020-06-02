@@ -91,50 +91,50 @@ def loopADC():
 			break
 		time.sleep(0.1) # Sleep for a bit
 
+	while True:
+		# Read the ADC Value
+		adc_value = ReadChannel(0)
 
-	# Read the ADC Value
-	adc_value = ReadChannel(0)
-
-	# Check whether to turn the LED off
-	if (doFlash and (datetime.now() - startDate).total_seconds()) >= 0.8:
-		doFlash = False
-		GPIO.output(19,GPIO.LOW)
+		# Check whether to turn the LED off
+		if (doFlash and (datetime.now() - startDate).total_seconds()) >= 0.8:
+			doFlash = False
+			GPIO.output(19,GPIO.LOW)
 
 
-	# Check to illuimate the LED if the threshold is crossed
-	if adc_value * (1-threshold) > moving_avg and ((datetime.now() - crossDate).total_seconds() >= 0.4):
-		if not doFlash:
-			GPIO.output(19,GPIO.HIGH)
-			doFlash = True
-		adc_queue.put(1)
-		crossDate = datetime.now() # Update cross time
-		#print(str(adc_value) + ", " + str(moving_avg))
-	else:
-		avg_count += adc_value
+		# Check to illuimate the LED if the threshold is crossed
+		if adc_value * (1-threshold) > moving_avg and ((datetime.now() - crossDate).total_seconds() >= 0.4):
+			if not doFlash:
+				GPIO.output(19,GPIO.HIGH)
+				doFlash = True
+			adc_queue.put(1)
+			crossDate = datetime.now() # Update cross time
+			#print(str(adc_value) + ", " + str(moving_avg))
+		else:
+			avg_count += adc_value
 
-	# # Check if loop count exceeds 1000000
-	#if loop_count > 100000:
-	#	loop_count = 1
-	#	avg_count = 0
+		# # Check if loop count exceeds 1000000
+		#if loop_count > 100000:
+		#	loop_count = 1
+		#	avg_count = 0
 
-	# # Calculate the moving average
-	moving_avg = avg_count / loop_counter
-	loop_counter += 1
+		# # Calculate the moving average
+		moving_avg = avg_count / loop_counter
+		loop_counter += 1
 
-	#print(adc_value)
-	#print(moving_avg)
+		#print(adc_value)
+		#print(moving_avg)
 
-	# Append the 10 bit voltage value
-	if doSampling:
-		samples.append(adc_value)
+		# Append the 10 bit voltage value
+		if doSampling:
+			samples.append(adc_value)
 
-	# check if the escape button is pressed
-	if GPIO.input(12) == GPIO.HIGH:
-		print("\nDrumTime ADC is now exiting")
-		break
+		# check if the escape button is pressed
+		if GPIO.input(12) == GPIO.HIGH:
+			print("\nDrumTime ADC is now exiting")
+			break
 
-	# End of Loop
-	time.sleep(interval)
+		# End of Loop
+		time.sleep(interval)
 
 thread1 = threading.Thread(target=loopADC)
 thread2 = threading.Thread(target=loopScreen,args=(adc_queue,start_queue,))
