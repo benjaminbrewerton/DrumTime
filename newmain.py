@@ -137,7 +137,7 @@ def loopADC():
 	time.sleep(interval)
 
 thread1 = threading.Thread(target=loopADC)
-thread2 = threading.Thread(target=loopScreen,args=(adc_queue,))
+thread2 = threading.Thread(target=loopScreen,args=(adc_queue,start_queue,))
 
 # Start the threads
 thread1.start()
