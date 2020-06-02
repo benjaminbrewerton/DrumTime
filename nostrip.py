@@ -10,7 +10,6 @@ import time
 import math
 import RPi.GPIO as GPIO
 from datetime import datetime
-from newmain import start_program
 
 # GPIO info
 GPIO.setmode(GPIO.BCM)
@@ -121,6 +120,7 @@ def loopScreen(adc_queue):
 	global font
 	global fps_int
 	global LEDStop
+	global start_program
 
 	# Draw the welcome screen
 	draw.text((BORDER, 10), "DrumTime", font=load_font, fill=255)
