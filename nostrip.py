@@ -126,6 +126,10 @@ def loopScreen(adc_queue, start_program):
 	draw.text((BORDER, HEIGHT // 4), "DrumTime", font=load_font, fill=255)
 	draw.text((BORDER, HEIGHT - HEIGHT // 4), "Press Reset button to start!", font=font, fill=255)
 
+	# Display the image
+	disp.image(image)
+	disp.display()
+
 	# Check if the program needs to be started
 	while not start_program:
 		# check if the start button is pressed
@@ -141,6 +145,7 @@ def loopScreen(adc_queue, start_program):
 	# Draw the L & R identifiers
 	draw.text((2, 0), "L", font=font, fill=255)
 	draw.text((2, HEIGHT - 9), "R", font=font, fill=255)
+
 	# Draw the pause and stop buttons
 	drawStop(draw)
 	drawPause(draw)
