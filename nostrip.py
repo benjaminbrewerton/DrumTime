@@ -106,10 +106,7 @@ load_font = ImageFont.truetype("/home/ben/prac/UniversCondensed.ttf", 24)
 # LED Stopping Boolean
 LEDStop = False
 
-# Program starter
-start_program = False
-
-def loopScreen(adc_queue):
+def loopScreen(adc_queue, start_queue):
 	global draw
 	global loop_count
 	global fps
@@ -123,7 +120,6 @@ def loopScreen(adc_queue):
 	global font
 	global fps_int
 	global LEDStop
-	global start_program
 
 	# Draw the welcome screen
 	draw.text((BORDER + 20, 0), "DrumTime", font=load_font, fill=255)
@@ -135,14 +131,10 @@ def loopScreen(adc_queue):
 	disp.display()
 
 	# Check if the program needs to be started
-	while not start_program:
-		# check if the start button is pressed
-		if GPIO.input(12) == GPIO.HIGH:
-			clearDisplay()
-			start_program = True # Start the main program
-			break
+	while start_queue.empty():
+		pass # Wait
 
-		time.sleep(0.1) # Sleep for a bit
+	draw.rectangle((0, 0, WIDTH, HEIGHT), outline=0, fill=0) # Clear the screen
 
 	# After while loop, draw static images/text
 	# Draw default images

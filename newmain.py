@@ -8,7 +8,7 @@ import adafruit_ssd1306
 import board
 import digitalio
 import threading
-from nostrip import loopScreen, start_program
+from nostrip import loopScreen
 from queue import Queue
 
 # GPIO info
@@ -68,11 +68,12 @@ crossDate = datetime.now()
 
 # Create the queue to hold the ADC captures
 adc_queue = Queue()
+start_queue = Queue()
 
 # Print a statement that the listeining is starting
 print("Starting DrumTime with fs: " + str(sample_rate) + "Hz and sensitivity threshold of " + str(threshold*100) + "%")
 
-def loopADC(start_program):
+def loopADC():
 	global threshold
 	global moving_avg
 	global avg_count
@@ -82,52 +83,58 @@ def loopADC(start_program):
 	global doSampling
 	global crossDate
 	global adc_queue
-	global start_program
 
-	while start_program:
-		# Read the ADC Value
-		adc_value = ReadChannel(0)
-
-		# Check whether to turn the LED off
-		if (doFlash and (datetime.now() - startDate).total_seconds()) >= 0.8:
-			doFlash = False
-			GPIO.output(19,GPIO.LOW)
-
-
-		# Check to illuimate the LED if the threshold is crossed
-		if adc_value * (1-threshold) > moving_avg and ((datetime.now() - crossDate).total_seconds() >= 0.4):
-			if not doFlash:
-				GPIO.output(19,GPIO.HIGH)
-				doFlash = True
-			adc_queue.put(1)
-			crossDate = datetime.now() # Update cross time
-			#print(str(adc_value) + ", " + str(moving_avg))
-		else:
-			avg_count += adc_value
-
-		# # Check if loop count exceeds 1000000
-		#if loop_count > 100000:
-		#	loop_count = 1
-		#	avg_count = 0
-
-		# # Calculate the moving average
-		moving_avg = avg_count / loop_counter
-		loop_counter += 1
-
-		#print(adc_value)
-		#print(moving_avg)
-
-		# Append the 10 bit voltage value
-		if doSampling:
-			samples.append(adc_value)
-
-		# check if the escape button is pressed
+	while True:
+		# check if the start button is pressed
 		if GPIO.input(12) == GPIO.HIGH:
-			print("\nDrumTime ADC is now exiting")
+			start_queue.put(1) # Start the program
 			break
+		time.sleep(0.1) # Sleep for a bit
 
-		# End of Loop
-		time.sleep(interval)
+
+	# Read the ADC Value
+	adc_value = ReadChannel(0)
+
+	# Check whether to turn the LED off
+	if (doFlash and (datetime.now() - startDate).total_seconds()) >= 0.8:
+		doFlash = False
+		GPIO.output(19,GPIO.LOW)
+
+
+	# Check to illuimate the LED if the threshold is crossed
+	if adc_value * (1-threshold) > moving_avg and ((datetime.now() - crossDate).total_seconds() >= 0.4):
+		if not doFlash:
+			GPIO.output(19,GPIO.HIGH)
+			doFlash = True
+		adc_queue.put(1)
+		crossDate = datetime.now() # Update cross time
+		#print(str(adc_value) + ", " + str(moving_avg))
+	else:
+		avg_count += adc_value
+
+	# # Check if loop count exceeds 1000000
+	#if loop_count > 100000:
+	#	loop_count = 1
+	#	avg_count = 0
+
+	# # Calculate the moving average
+	moving_avg = avg_count / loop_counter
+	loop_counter += 1
+
+	#print(adc_value)
+	#print(moving_avg)
+
+	# Append the 10 bit voltage value
+	if doSampling:
+		samples.append(adc_value)
+
+	# check if the escape button is pressed
+	if GPIO.input(12) == GPIO.HIGH:
+		print("\nDrumTime ADC is now exiting")
+		break
+
+	# End of Loop
+	time.sleep(interval)
 
 thread1 = threading.Thread(target=loopADC)
 thread2 = threading.Thread(target=loopScreen,args=(adc_queue,))
