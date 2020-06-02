@@ -8,7 +8,7 @@ import adafruit_ssd1306
 import board
 import digitalio
 import threading
-from newscreen import loopScreen
+from nostrip import loopScreen
 from queue import Queue
 
 # GPIO info
