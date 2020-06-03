@@ -71,7 +71,8 @@ NAV_BUTTON_HEIGHT = 6
 def drawPlay(draw):
 	# Draw a rotated triangle
 	# Defined from the bottom point of the play button
-	draw.polygon([(PLAY_PAUSE_LOC, HEIGHT), (PLAY_PAUSE_LOC, HEIGHT - NAV_BUTTON_HEIGHT), (PLAY_PAUSE_LOC + NAV_BUTTON_HEIGHT, HEIGHT - (NAV_BUTTON_HEIGHT // 2))], outline=255, fill = 255)
+	draw.rectangle((PLAY_PAUSE_LOC - NAV_BUTTON_HEIGHT // 2, HEIGHT - NAV_BUTTON_HEIGHT, PLAY_PAUSE_LOC + NAV_BUTTON_HEIGHT // 2 + 1, HEIGHT), outline=0, fill=0) # Clear the pause
+	draw.polygon([(PLAY_PAUSE_LOC - NAV_BUTTON_HEIGHT, HEIGHT - 1), (PLAY_PAUSE_LOC - NAV_BUTTON_HEIGHT, HEIGHT - NAV_BUTTON_HEIGHT - 1), (PLAY_PAUSE_LOC, HEIGHT - (NAV_BUTTON_HEIGHT // 2) - 1)], outline=255, fill=255)
 # Function to draw the pause button
 def drawPause(draw):
 	# Draw rectangles from top left to bottom right corners
@@ -125,19 +126,11 @@ recorded_strokes = []
 
 # Load default font.
 font = ImageFont.load_default()
-
-# Draw default images
-# Draw the L & R identifiers
-draw.text((2, 0), "L", font=font, fill=255)
-draw.text((2, HEIGHT - 9), "R", font=font, fill=255)
-# Draw the pause and stop buttons
-drawStop(draw)
-drawPause(draw)
+load_font = ImageFont.truetype("/home/ben/prac/UniversCondensed.ttf", 24)
+big_font = ImageFont.truetype("/home/ben/prac/UniversCondensed.ttf", 48)
 
 # LED Stopping Boolean
 LEDStop = False
-RightStop = False
-LeftStop = False
 Stoppers = []
 for stroke in strokes:
 	Stoppers.append([stroke[1], [stroke[0], False]]) # Append each stroke to the array
@@ -155,7 +148,56 @@ def getStopper(index): # Hand type, 1 = left, 2 = right
 		return [queries[0][1], queries[1][1]]
 	return []
 
-def loopScreen(adc_queue):
+# Define a function to handle the countdown to go
+def startCountdown(adc_queue):
+	# Countdown to start the program
+	STARTUP_COUNT = 3
+	for i in range(3):
+		draw.rectangle((0, 0, WIDTH, HEIGHT), outline=0, fill=0) # Clear the screen
+		draw.text((WIDTH // 2.5, 0), str(STARTUP_COUNT), font=big_font, fill=255)
+		disp.image(image)
+		disp.display()
+		STARTUP_COUNT = STARTUP_COUNT - 1
+		time.sleep(1)
+
+	while not adc_queue.empty():
+		adc_queue.get() # pop all the adc values in the queue
+
+	draw.rectangle((0, 0, WIDTH, HEIGHT), outline=0, fill=0) # Clear the screen
+
+	drawStatics(draw) # Draw the static features
+
+
+# Define a function to handle pausing
+def pauseScreen(adc_queue):
+	drawPlay(draw) # Display the play button
+	disp.image(image)
+	disp.display()
+	time.sleep(1) # Debounce
+	while True:
+		if GPIO.input(6) == GPIO.HIGH:
+			break # Break if unpause
+		time.sleep(0.1) # Sleep for a bit
+	startCountdown(adc_queue)
+
+# Function to stop the program
+def stopScreen(adc_queue):
+	startCountdown(adc_queue)
+
+# Function to draw the static variables
+def drawStatics(draw):
+	# After while loop, draw static images/text
+	# Draw default images
+	# Draw the L & R identifiers
+	draw.text((2, 0), "L", font=font, fill=255)
+	draw.text((2, HEIGHT - 9), "R", font=font, fill=255)
+
+	# Draw the pause and stop buttons
+	drawStop(draw)
+	drawPause(draw)
+
+
+def loopScreen(adc_queue, start_queue):
 	global draw
 	global loop_count
 	global fps
@@ -169,9 +211,22 @@ def loopScreen(adc_queue):
 	global font
 	global fps_int
 	global LEDStop
-	global LeftStop
-	global RightStop
 	global Stoppers
+
+	# Draw the welcome screen
+	draw.text((BORDER + 20, 0), "DrumTime", font=load_font, fill=255)
+	draw.text((BORDER + 12, HEIGHT - HEIGHT // 2.5), "Press Play button", font=font, fill=255)
+	draw.text((BORDER + 32, HEIGHT - HEIGHT // 4), "to start!", font=font, fill=255)
+
+	# Display the image
+	disp.image(image)
+	disp.display()
+
+	# Check if the program needs to be started
+	while start_queue.empty():
+		pass # Wait
+
+	startCountdown(adc_queue) # Countdown to intro
 
 	# Begin While Loop
 	while(True):
@@ -192,9 +247,7 @@ def loopScreen(adc_queue):
 		DIVIDER_WIDTH = math.floor(scaled_time * WIDTH)
 		draw.rectangle((0, HEIGHT // 2 - DIVIDER_HEIGHT, DIVIDER_WIDTH, HEIGHT // 2 + DIVIDER_HEIGHT), outline=255, fill=255)
 
-		#LEDStop = False # Set the LED to be stopped if needed
-		#LeftStop = False
-		#RightStop = False
+		LEDStop = False # Set the LED to be stopped if needed
 		# Draw the strokes dynamically
 		for stroke in strokes:
 			stroke_time = (stroke[1] / time_window) * WIDTH
@@ -248,13 +301,14 @@ def loopScreen(adc_queue):
 		if(not adc_queue.empty()):
 			val = adc_queue.get() # pop the first entry
 			
-			if val == 1:
+			if val == 1: # Regular Stroke
 				recorded_strokes.append(DIVIDER_WIDTH) # Append the current time
-			elif val == 2:
-				drawPlay() # Display the play button
-			elif val == 3:
-				drawPause() # Display the Pause Button
-
+			elif val == 2: # Pause Time
+				pauseScreen(adc_queue) # Pause the screen
+			elif val == 3: # Stop Time
+				loop_count = 0
+				recorded_strokes.clear()
+				stopScreen(adc_queue) # Stop the screen and restart
 
 		# Display the image
 		disp.image(image)

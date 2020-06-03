@@ -8,7 +8,7 @@ import adafruit_ssd1306
 import board
 import digitalio
 import threading
-from nostrip import loopScreen
+from newscreen import loopScreen
 from queue import Queue
 
 # GPIO info
@@ -17,6 +17,7 @@ GPIO.setwarnings(False)
 GPIO.setup(19, GPIO.OUT, initial=GPIO.LOW) # Red LED
 GPIO.setup(12, GPIO.IN, pull_up_down=GPIO.PUD_DOWN) # Terminate Button
 GPIO.setup(6, GPIO.IN, pull_up_down=GPIO.PUD_DOWN) # Play/Pause Button
+GPIO.setup(5, GPIO.IN, pull_up_down=GPIO.PUD_DOWN) # Stop button
 
 # Define the Reset Pin
 oled_reset = digitalio.DigitalInOut(board.D18)
@@ -37,10 +38,10 @@ doSampling = False
 # Function to query the ADC
 def ReadChannel(channel):
 	# Transfer 1000 to read channel 0 with the D0-D2 bits
-    adc = spi.xfer2([1, (8+channel) << 4 , 0])
+	adc = spi.xfer2([1, (8+channel) << 4 , 0])
 	# Receive the bits b0-b9 from the adc sample
-    data = ((adc[1] & 3) << 8) + adc[2]
-    return data
+	data = ((adc[1] & 3) << 8) + adc[2]
+	return data
 
 # Control the LED flash
 doFlash = True
@@ -50,10 +51,6 @@ moving_avg = (2**10) / 2 # half point of a 10 bit register, the centered point
 loop_counter = 1 # Count of loop iterations
 sample_rate = 1000 # Sampling rate in Hz
 interval = 1/sample_rate # Interval between loop iterations
-
-# Variable for controlling the start of the program
-#global start_program
-#start_program = False
 
 # Threshold of stroke to background noise
 threshold = 0.35
@@ -109,9 +106,15 @@ def loopADC():
 				doFlash = True
 			adc_queue.put(1)
 			crossDate = datetime.now() # Update cross time
-			#print(str(adc_value) + ", " + str(moving_avg))
-		else:
-			avg_count += adc_value
+			print(str(adc_value) + ", " + str(moving_avg))
+			time.sleep(0.05)
+
+		avg_count += adc_value
+
+		if GPIO.input(6) == GPIO.HIGH: # Check for pause
+			adc_queue.put(2) # Initiate a pause/play
+		if GPIO.input(5) == GPIO.HIGH:
+			adc_queue.put(3) # Initate Stop
 
 		# # Check if loop count exceeds 1000000
 		#if loop_count > 100000:
